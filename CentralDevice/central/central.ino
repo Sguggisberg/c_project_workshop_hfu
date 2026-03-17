@@ -5,7 +5,7 @@
 #include "peripheral.h"
 
 bool logging = true;
-bool isCentral = false;
+bool isCentral = true;
 
 /*
 bool isCentral() {
@@ -14,6 +14,7 @@ bool isCentral() {
 */
 
 void setup() {
+  Serial.begin(9600);
   if (isCentral) {
     setup_central();
   } else {
