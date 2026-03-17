@@ -1,0 +1,15 @@
+#include <WiFiNINA.h>
+
+#ifndef PERIPHERAL_H
+#define PERIPHERAL_H
+
+#include <ArduinoBLE.h>
+
+extern BLEDevice central;
+
+bool isCentral();
+
+void setupPeripheral();
+
+
+#endif

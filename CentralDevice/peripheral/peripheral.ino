@@ -50,8 +50,8 @@ void loop() {
         10,
         7
       };
-      memcpy(&message.senderId, central.address().c_str(), central.address().length());
-      memcpy(&message.receiverId, BLE.address().c_str(), BLE.address().length());
+      //memcpy(message.senderId, central.address().c_str(), central.address().length());
+      //memcpy(message.receiverId, BLE.address().c_str(), BLE.address().length());
     
       Serial.print("Write value: ");
       //Serial.println(message);
