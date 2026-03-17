@@ -9,10 +9,6 @@ bool isCentral() {
 
 void setupPeripheral()
 {
-  central = BLE.central();
-  if (!isCentral())
-  {
     // Central does not exits, create it
     BLE.begin();
-  }
 }

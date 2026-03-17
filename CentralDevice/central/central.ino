@@ -7,25 +7,23 @@
 bool logging = true;
 bool isCentral = false;
 
+/*
+bool isCentral() {
+  return !BLE.central();
+}
+*/
+
 void setup() {
   if (isCentral) {
     setup_central();
   } else {
+    setupPeripheral();
   }
 }
 void loop() {
   if (isCentral) {
     loop_central();
   } else {
+    loopPeripheral();
   }
-}
-
-
-String getMacAddress() {
-  String address = BLE.address();
-  if (logging) {
-    Serial.print("Own Mac Address: ");
-    Serial.print(address);
-  }
-  return address;
 }

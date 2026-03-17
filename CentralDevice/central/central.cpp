@@ -3,6 +3,8 @@
 #include "central.h"
 #include "message.h"
 
+extern bool logging;
+
 void log(BLEDevice peripheral);
 
 void setup_central() {
@@ -13,6 +15,15 @@ void setup_central() {
   Serial.println("BLE Central - LED control");
   // start scanning for Button Device BLE peripherals
   BLE.scanForUuid("19b10000-e8f2-537e-4f6c-d104768a1214");
+}
+
+String getMacAddress() {
+  String address = BLE.address();
+  if (logging) {
+    Serial.print("Own Mac Address: ");
+    Serial.print(address);
+  }
+  return address;
 }
 
 void loop_central() {

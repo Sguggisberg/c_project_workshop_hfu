@@ -5,9 +5,11 @@
 
 #include <ArduinoBLE.h>
 
+#include "message.h"
+
 extern BLEDevice central;
 
 void setupPeripheral();
-
+void loopPeripheral();
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef SERVICE_H
 #define SERVICE_H
 
+#include <Arduino.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -27,5 +28,6 @@ struct Message {
   uint8_t y;  // Only necessary for moves
 };
 
+String getMacAddress();
 
 #endif
