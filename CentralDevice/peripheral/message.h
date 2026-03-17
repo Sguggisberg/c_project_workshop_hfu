@@ -1,10 +1,8 @@
-#ifndef _SERVICE_H_
-#define _SERVICE_H_
-
+#ifndef MESSAGE_H
+#define MESSAGE_H
 #include <stddef.h>
 
 const size_t MAC_ADDR_LENGTH = 6;
-
 typedef uint8_t MacAddress[MAC_ADDR_LENGTH];
 
 enum MessageType {
