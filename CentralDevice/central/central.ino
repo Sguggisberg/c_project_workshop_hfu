@@ -1,10 +1,12 @@
 #include <ArduinoBLE.h>
+#include <stdbool.h>
+
+
+bool logging = true;
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
   Serial.begin(9600);
-  while (!Serial);
-  // initialize the BLE hardware
+  while (!Serial)    ;
   BLE.begin();
   Serial.println("BLE Central - LED control");
   // start scanning for Button Device BLE peripherals
@@ -15,13 +17,7 @@ void loop() {
   BLEDevice peripheral = BLE.available();
   if (peripheral) {
     // discovered a peripheral, print out address, local name, and advertised service
-    Serial.print("Found ");
-    Serial.print(peripheral.address());
-    Serial.print(" '");
-    Serial.print(peripheral.localName());
-    Serial.print("' ");
-    Serial.print(peripheral.advertisedServiceUuid());
-    Serial.println();
+    log(peripheral);
 
 
     // stop scanning
@@ -59,19 +55,28 @@ void controlLed(BLEDevice peripheral) {
   while (peripheral.connected()) {
     // while the peripheral is connected
     if (LEDCharacteristic.canRead()) {
-      byte value = LEDCharacteristic.read();
-      LEDCharacteristic.readValue(value);
+      //  byte value = LEDCharacteristic.read();
+      char value[2];
+      LEDCharacteristic.readValue(&value, 2);
       //Serial.println(LEDCharacteristic.readValue(value));
-      if (value == 0x01) {
-        Serial.println("ON");
-        digitalWrite(LED_BUILTIN, HIGH);
-      }
-      else if (value == 0x00) {
-        digitalWrite(LED_BUILTIN, LOW);
-        Serial.println("OFF");
-      }
+
+      Serial.println("Wert: ");
+      Serial.println(value);
+      Serial.println("Ende");
     }
     delay(500);
   }
   Serial.println("Peripheral disconnected");
+}
+
+void log(BLEDevice peripheral) {
+  if (peripheral && logging ) {
+    Serial.print("Found ");
+    Serial.print(peripheral.address());
+    Serial.print(" '");
+    Serial.print(peripheral.localName());
+    Serial.print("' ");
+    Serial.print(peripheral.advertisedServiceUuid());
+    Serial.println();
+  }
 }
