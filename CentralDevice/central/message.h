@@ -1,5 +1,9 @@
 #ifndef SERVICE_H
 #define SERVICE_H
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stddef.h>
 
 const size_t MAC_ADDR_LENGTH = 6;

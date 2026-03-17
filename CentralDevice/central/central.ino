@@ -2,9 +2,10 @@
 #include <stdbool.h>
 #include "message.h"
 #include "central.h"
+#include "peripheral.h"
 
 bool logging = true;
-bool isCentral = true;
+bool isCentral = false;
 
 void setup() {
   if (isCentral) {

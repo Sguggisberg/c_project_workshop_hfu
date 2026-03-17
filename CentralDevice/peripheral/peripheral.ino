@@ -3,6 +3,12 @@
 
 #include "message.h"
 
+/*  // Zur Verfügung stehende UUIDs
+ 419d3655-282c-4a0e-9b7d-fbed8e928581
+ b7a73424-a7d9-4aff-958d-04f4612d461b
+ b9e3b5f7-b6b8-42a8-ae4b-9ae9f7f6b618
+ 128b0f5a-f62a-477b-ab17-4caea64f9415
+ */
 int buttonPin = 2;
 boolean ledSwitch;
 
