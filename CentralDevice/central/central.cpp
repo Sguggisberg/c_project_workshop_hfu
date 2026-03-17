@@ -6,7 +6,7 @@
 void log(BLEDevice peripheral);
 
 void setup_central() {
-  Serial.begin(9600);
+
   while (!Serial)
     ;
   BLE.begin();

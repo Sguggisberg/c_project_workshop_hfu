@@ -8,6 +8,7 @@ bool logging = true;
 bool isCentral = true;
 
 void setup() {
+  Serial.begin(9600);
   if (isCentral) {
     setup_central();
   } else {
