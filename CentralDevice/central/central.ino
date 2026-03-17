@@ -5,7 +5,7 @@
 #include "peripheral.h"
 
 bool logging = true;
-bool isCentral = false;
+bool isCentral = true;
 
 void setup() {
   if (isCentral) {
