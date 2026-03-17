@@ -1,16 +1,19 @@
 #include <ArduinoBLE.h>
 #include <stdbool.h>
+#include "message.h"
 
 
 bool logging = true;
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial)    ;
+  while (!Serial)
+    ;
   BLE.begin();
   Serial.println("BLE Central - LED control");
   // start scanning for Button Device BLE peripherals
   BLE.scanForUuid("19b10000-e8f2-537e-4f6c-d104768a1214");
+  String test = getMacAddress();
 }
 void loop() {
   // check if a peripheral has been discovered
@@ -56,12 +59,12 @@ void controlLed(BLEDevice peripheral) {
     // while the peripheral is connected
     if (LEDCharacteristic.canRead()) {
       //  byte value = LEDCharacteristic.read();
-      char value[2];
-      LEDCharacteristic.readValue(&value, 2);
-      //Serial.println(LEDCharacteristic.readValue(value));
-
+      Message value;
+      LEDCharacteristic.readValue(&value, sizeof(Message));
       Serial.println("Wert: ");
-      Serial.println(value);
+      Serial.println(value.type);
+      Serial.println(value.x);
+      Serial.println(value.y);
       Serial.println("Ende");
     }
     delay(500);
@@ -70,7 +73,7 @@ void controlLed(BLEDevice peripheral) {
 }
 
 void log(BLEDevice peripheral) {
-  if (peripheral && logging ) {
+  if (peripheral && logging) {
     Serial.print("Found ");
     Serial.print(peripheral.address());
     Serial.print(" '");
@@ -79,4 +82,13 @@ void log(BLEDevice peripheral) {
     Serial.print(peripheral.advertisedServiceUuid());
     Serial.println();
   }
+}
+
+String getMacAddress() {
+  String address = BLE.address();
+  if (logging) {
+    Serial.print("Own Mac Address: ");
+    Serial.print(address);
+  }
+  return address;
 }
