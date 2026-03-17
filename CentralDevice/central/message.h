@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-const size_t MAC_ADDR_LENGTH = 6;
-typedef uint8_t MacAddress[MAC_ADDR_LENGTH];
+const size_t MAC_ADDR_LENGTH = 18;
+typedef char MacAddress[MAC_ADDR_LENGTH];
 
 enum MessageType {
   START,

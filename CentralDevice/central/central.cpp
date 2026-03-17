@@ -20,7 +20,7 @@ String getMacAddress() {
   String address = BLE.address();
   if (logging) {
     Serial.print("Own Mac Address: ");
-    Serial.print(address);
+    Serial.println(address);
   }
   return address;
 }
