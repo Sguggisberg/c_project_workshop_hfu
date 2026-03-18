@@ -32,6 +32,9 @@ void setupPeripheral() {
 void loopPeripheral() {
   // listen for BLE peripherals to connect:
   BLEDevice central = BLE.central();
+  if (!central) {
+    Serial.println("BLE no central");
+  }
   // if a central is connected to peripheral:
   if (central) {
     Serial.print("Connected to central: ");
@@ -57,16 +60,15 @@ void loopPeripheral() {
         Message received;
         int result = receiveMessage(ResponseCharacteristic, received);
         //int result = ResponseCharacteristic.readValue(&received, sizeof(Message));
-        Serial.println(result);
 
         Serial.print("Received: ");
         Serial.println(received.type);
         Serial.println(received.x);
         Serial.println(received.y);
+
+        if (received.type == )
       }
-      // when the central disconnects, print it out:
-      Serial.print(F("Disconnected from central: "));
-      Serial.println(central.address());
+      delay(500);
     }
   }
 }

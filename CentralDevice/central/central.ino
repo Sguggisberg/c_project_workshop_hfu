@@ -19,8 +19,8 @@ bool isCentral() {
 */
 
 void setup() {
-  Serial.println("Begin");
   Serial.begin(9600);
+  Serial.println("Begin");
   Serial.println("Setup");
   if (isCentral) {
     setup_central();
