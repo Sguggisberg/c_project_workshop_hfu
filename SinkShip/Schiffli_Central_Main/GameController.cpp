@@ -180,6 +180,7 @@ void GameController::bearbeiteAttackTouch() {
     if (ResponseCharacteristic.written()) {
       Message received;
       if (receiveMessage(ResponseCharacteristic, received)) {
+        // TODO handle fail
       }
     }
 

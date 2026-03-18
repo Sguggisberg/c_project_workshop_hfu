@@ -9,13 +9,6 @@ BLECharacteristic ResponseCharacteristic(GAME_RESPONSE_CHARACTERSITIC_UUID, BLER
 
 
 void setupPeripheral() {
-  // begin initialization
-  if (!BLE.begin()) {
-    Serial.println("starting Bluetooth® Low Energy failed!");
-
-    while (true) {
-    }
-  }
   // set advertised local name and service UUID:
   BLE.setLocalName("Game Device");
   BLE.setAdvertisedService(GameService);

@@ -9,11 +9,7 @@ void log(BLEDevice peripheral);
 void send_response(BLEDevice peripheral);
 
 void setup_central() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  while (!Serial)
-    ;
-  // initialize the BLE hardware
-  BLE.begin();
+
   Serial.println("BLE Central - LED control");
   // start scanning for Button Device BLE peripherals
   BLE.scanForUuid(GAME_SERVICE);

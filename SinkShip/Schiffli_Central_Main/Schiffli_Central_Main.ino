@@ -26,7 +26,10 @@ bool isCentral = false;
 void setup() {
   SPI.begin();   //  MUSS drin bleiben!
   controller.begin();
-    if (isCentral) {
+    // initialize the BLE hardware
+  BLE.begin();
+  isCentral = BLE.central();
+  if (isCentral) {
     setup_central();
   } else {
     setupPeripheral();
