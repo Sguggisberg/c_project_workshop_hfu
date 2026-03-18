@@ -9,6 +9,9 @@
 #include "TouchManager.h"
 #include "GameController.h"
 
+#include "central.h"
+#include "peripheral.h"
+
 Adafruit_ILI9341 tft(TFT_CS, TFT_DC, TFT_RST);
 XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);
 
@@ -17,9 +20,17 @@ DisplayManager displayManager(tft, TOUCH_CS);
 TouchManager touchManager(ts, TFT_CS, TOUCH_CS);
 GameController controller(game, displayManager, touchManager);
 
+bool logging = false;
+bool isCentral = false;
+
 void setup() {
   SPI.begin();   //  MUSS drin bleiben!
   controller.begin();
+    if (isCentral) {
+    setup_central();
+  } else {
+    setupPeripheral();
+  }
 }
 
 void loop() {

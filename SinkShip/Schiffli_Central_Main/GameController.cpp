@@ -1,4 +1,7 @@
 #include "GameController.h"
+#include "peripheral.h"
+#include "message.h"
+#include "peripheral.h"
 #include <cstdio>
 #include <cstring>
 
@@ -164,9 +167,22 @@ void GameController::bearbeiteAttackTouch() {
     char msg[64];
     snprintf(msg, sizeof(msg), "Angriff: %u,%u", gx, gy);
 
+    if (!sendMessage(RequestCharacteristic, BOMB_ATTACK, gx, gy)) {
+      Serial.print("Send attack");
+      Serial.print(gx);
+      Serial.print(", ");
+      Serial.println(gy);
+    }
     lastAttackX = gx;
     lastAttackY = gy;
     attackModeArmed = false;
+
+    if (ResponseCharacteristic.written()) {
+      Message received;
+      if (receiveMessage(ResponseCharacteristic, received)) {
+      }
+    }
+
     playMode = MODE_WAIT_RESPONSE;
 
     game.setStatusMessage(msg);
@@ -216,10 +232,12 @@ void GameController::bearbeiteSerielleAntwort() {
         if (response == RESP_WATER) {
           game.setEnemyCellState(lastAttackX, lastAttackY, ENEMY_WATER);
           display.drawEnemyWater(lastAttackX, lastAttackY);
+          sendMessage(ResponseCharacteristic, MISSED, lastAttackX, lastAttackY);
           game.setStatusMessage("Wasser");
         } else if (response == RESP_HIT) {
           game.setEnemyCellState(lastAttackX, lastAttackY, ENEMY_HIT);
           display.drawEnemyHit(lastAttackX, lastAttackY);
+          sendMessage(ResponseCharacteristic, HIT, lastAttackX, lastAttackY);
           game.setStatusMessage("Treffer");
         } else if (response == RESP_SUNK) {
           uint8_t sunkLen = 1;
