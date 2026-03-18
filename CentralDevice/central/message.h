@@ -2,6 +2,7 @@
 #define MESSAGE_H
 
 #include <Arduino.h>
+#include <ArduinoBLE.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -33,5 +34,8 @@ struct Message {
 };
 
 String getMacAddress();
+
+int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, uint8_t y);
+int receiveMessage(BLECharacteristic& characteristic, Message& message);
 
 #endif
