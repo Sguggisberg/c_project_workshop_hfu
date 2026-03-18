@@ -66,7 +66,6 @@ void loopPeripheral() {
         Serial.println(received.x);
         Serial.println(received.y);
 
-        if (received.type == )
       }
       delay(500);
     }
