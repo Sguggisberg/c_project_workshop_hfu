@@ -4,6 +4,8 @@
 int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, uint8_t y) {
   Message message;
   message.type = BOMB_ATTACK;
+  message.recevierId[0] = '\0';
+  message.senderId[0] = '\0';
   message.x = 7;
   message.y = 8;
 
