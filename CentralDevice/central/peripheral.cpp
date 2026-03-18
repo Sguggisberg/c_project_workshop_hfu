@@ -6,7 +6,9 @@ boolean ledSwitch;
 
 BLEService GameService("19B10000-E8F2-537E-4F6C-D104768A1214");  // BLE LED Service
 // BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLECharacteristic MessageCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLENotify | BLEWrite,
+BLECharacteristic RequestCharacteristic("19B10001-E8F2-537E-4F6C-D104768A1214", BLERead | BLEWrite,
+     sizeof(Message), true);
+BLECharacteristic ResponseCharacteristic("19b10002-e8f2-537e-4f6c-d104768a1214", BLERead | BLEWrite,
      sizeof(Message), true);
 
 /*
@@ -43,12 +45,13 @@ void setupPeripheral() {
   BLE.setLocalName("Game Device");
   BLE.setAdvertisedService(GameService);
   // add the characteristic to the service
-  GameService.addCharacteristic(MessageCharacteristic);
+  GameService.addCharacteristic(RequestCharacteristic);
+  GameService.addCharacteristic(ResponseCharacteristic);
   // add service
   BLE.addService(GameService);
   // start advertising
   BLE.advertise();
-  Serial.println("BLE Message Peripheral, waiting for connections....");
+  Serial.println("BLE Game Peripheral, waiting for connections....");
 }
 
 int count = 1;
@@ -112,16 +115,29 @@ void loopPeripheral() {
     // print the central's MAC address:
     Serial.println(central.address());
 
-    Message message;
-    message.type = BOMB_ATTACK;
-    message.x = 7;
-    message.y = 8;
-
     // while the central is still connected to peripheral:
     while (central.connected()) {
 
       Serial.println("Write message");
-      MessageCharacteristic.writeValue(&message, sizeof(Message), false);
+      sendMessage(RequestCharacteristic, BOMB_ATTACK, 3, 7);
+
+      if (ResponseCharacteristic.canRead())
+      {
+        Serial.println("Can read from response characteristic");
+      }
+      else
+      {
+        Serial.println("Cannot read from response characterstic");
+      }
+      Message received;
+      //receiveMessage(ResponseCharacteristic, received);
+      int result = ResponseCharacteristic.readValue(&received, sizeof(Message));
+      Serial.println(result);
+      
+      Serial.print("Received: ");
+      Serial.println(received.type);
+      Serial.println(received.x);
+      delay(500);
     }
     // when the central disconnects, print it out:
     Serial.print(F("Disconnected from central: "));

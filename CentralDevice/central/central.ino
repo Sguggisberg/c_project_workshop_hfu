@@ -1,5 +1,3 @@
-#include <ArduinoBLE.h>
-#include <stdbool.h>
 #include "message.h"
 #include "central.h"
 #include "peripheral.h"
@@ -7,6 +5,7 @@
 bool logging = false;
 bool isCentral = false;
 
+extern const String BOARD_A="419d3655-282c-4a0e-9b7d-fbed8e928581";
 
 /*
 419d3655-282c-4a0e-9b7d-fbed8e928581
