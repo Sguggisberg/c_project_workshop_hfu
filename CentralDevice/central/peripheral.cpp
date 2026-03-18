@@ -2,9 +2,9 @@
 
 BLEService GameService(GAME_SERVICE);  // BLE LED Service
 // BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLECharacteristic RequestCharacteristic(GAME_REQUEST_CHARACTERSITIC_UUID, BLERead | BLEWrite,
+BLECharacteristic RequestCharacteristic(GAME_REQUEST_CHARACTERSITIC_UUID, BLERead | BLENotify | BLEWrite,
                                         sizeof(Message), true);
-BLECharacteristic ResponseCharacteristic(GAME_RESPONSE_CHARACTERSITIC_UUID, BLERead | BLEWrite,
+BLECharacteristic ResponseCharacteristic(GAME_RESPONSE_CHARACTERSITIC_UUID, BLERead | BLENotify | BLEWrite,
                                          sizeof(Message), true);
 
 
@@ -55,13 +55,14 @@ void loopPeripheral() {
         }
 
         Message received;
-        //receiveMessage(ResponseCharacteristic, received);
-        int result = ResponseCharacteristic.readValue(&received, sizeof(Message));
+        int result = receiveMessage(ResponseCharacteristic, received);
+        //int result = ResponseCharacteristic.readValue(&received, sizeof(Message));
         Serial.println(result);
 
         Serial.print("Received: ");
         Serial.println(received.type);
         Serial.println(received.x);
+        Serial.println(received.y);
       }
       // when the central disconnects, print it out:
       Serial.print(F("Disconnected from central: "));
