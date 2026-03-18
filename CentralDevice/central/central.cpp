@@ -84,7 +84,7 @@ void play_move(BLEDevice peripheral) {
   }
   while (peripheral.connected()) {
     // while the peripheral is connected
-    if (GameRequestCharacteristic.canRead()) {
+    if (GameRequestCharacteristic.written()) {
       Message value;
       GameRequestCharacteristic.readValue(&value, sizeof(Message));
       Serial.println("Wert: ");
@@ -98,12 +98,13 @@ void play_move(BLEDevice peripheral) {
   }
 }
 
+
 void send_response(BLEDevice peripheral) {
   BLECharacteristic GameResponseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
   Message response;
-  response = (Message){ HIT, " ", " ", 4, 5 };
+  response = (Message){ HIT, " ", " ", 9, 3 };
   if (GameResponseCharacteristic.canWrite()) {
-    int res = GameResponseCharacteristic.writeValue(&response, sizeof(response), false);
+    int res = GameResponseCharacteristic.writeValue(&response, sizeof(response));
     Serial.println("IsConnected: ");
     Serial.println(peripheral.connected());
     Serial.println("Response: ");
