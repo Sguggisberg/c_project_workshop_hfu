@@ -6,6 +6,7 @@
 extern bool logging;
 void play_move(BLEDevice peripheral);
 void log(BLEDevice peripheral);
+void send_response(BLEDevice peripheral);
 
 void setup_central() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -15,7 +16,7 @@ void setup_central() {
   BLE.begin();
   Serial.println("BLE Central - LED control");
   // start scanning for Button Device BLE peripherals
-  BLE.scanForUuid("19b10000-e8f2-537e-4f6c-d104768a1214");
+  BLE.scanForUuid(GAME_SERVICE);
 }
 
 String getMacAddress() {
@@ -31,7 +32,6 @@ void loop_central() {
   // check if a peripheral has been discovered
   BLEDevice peripheral = BLE.available();
   if (peripheral) {
-    // discovered a peripheral, print out address, local name, and advertised service
     Serial.print("Found ");
     Serial.print(peripheral.address());
     Serial.print(" '");
@@ -39,15 +39,15 @@ void loop_central() {
     Serial.print("' ");
     Serial.print(peripheral.advertisedServiceUuid());
     Serial.println();
-    if (peripheral.localName().indexOf("Button Device") < 0) {
-      Serial.println("No 'Button Device' in name");
-      return;  // If the name doesn't have "Button Device" in it then ignore it
+    if (peripheral.localName().indexOf("Game Device") < 0) {
+      Serial.println("No 'Game Device' in name");
+      return;
     }
     // stop scanning
     BLE.stopScan();
     controlLed(peripheral);
     // peripheral disconnected, start scanning again
-    BLE.scanForUuid("19b10000-e8f2-537e-4f6c-d104768a1214");
+    BLE.scanForUuid(GAME_SERVICE);
   }
 }
 
@@ -75,27 +75,38 @@ void controlLed(BLEDevice peripheral) {
 }
 
 void play_move(BLEDevice peripheral) {
-  // retrieve the LED characteristic
-  BLECharacteristic GameCharacteristic = peripheral.characteristic("19b10001-e8f2-537e-4f6c-d104768a1214");
-  if (!GameCharacteristic) {
-    Serial.println("Peripheral does not have LED characteristic!");
+  BLECharacteristic GameRequestCharacteristic = peripheral.characteristic(GAME_REQUEST_CHARACTERSITIC_UUID);
+
+  if (!GameRequestCharacteristic) {
+    Serial.println("Peripheral does not have MOVE characteristic!");
     peripheral.disconnect();
     return;
   }
   while (peripheral.connected()) {
     // while the peripheral is connected
-    if (GameCharacteristic.canRead()) {
-      byte value = GameCharacteristic.read();
-      GameCharacteristic.readValue(value);
-      //Serial.println(LEDCharacteristic.readValue(value));
-      if (value == 0x01) {
-        Serial.println("ON");
-        digitalWrite(LED_BUILTIN, HIGH);
-      } else if (value == 0x00) {
-        digitalWrite(LED_BUILTIN, LOW);
-        Serial.println("OFF");
-      }
+    if (GameRequestCharacteristic.canRead()) {
+      Message value;
+      GameRequestCharacteristic.readValue(&value, sizeof(Message));
+      Serial.println("Wert: ");
+      Serial.println(value.type);
+      Serial.println(value.x);
+      Serial.println(value.y);
+      Serial.println("Ende");
     }
     delay(500);
+    send_response(peripheral);
+  }
+}
+
+void send_response(BLEDevice peripheral) {
+  BLECharacteristic GameResponseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
+  Message response;
+  response = (Message){ HIT, " ", " ", 4, 5 };
+  if (GameResponseCharacteristic.canWrite()) {
+    int res = GameResponseCharacteristic.writeValue(&response, sizeof(response), false);
+    Serial.println("IsConnected: ");
+    Serial.println(peripheral.connected());
+    Serial.println("Response: ");
+    Serial.println(res);
   }
 }

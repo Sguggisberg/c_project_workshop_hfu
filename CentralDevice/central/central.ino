@@ -6,7 +6,7 @@
 
 bool logging = false;
 bool isCentral = true;
-extern const String BOARD_A="419d3655-282c-4a0e-9b7d-fbed8e928581";
+
 /*
 419d3655-282c-4a0e-9b7d-fbed8e928581
  b7a73424-a7d9-4aff-958d-04f4612d461b
