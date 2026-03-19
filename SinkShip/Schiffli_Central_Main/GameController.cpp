@@ -389,11 +389,14 @@ void GameController::bearbeiteSerielleAntwort() {
       uint8_t ay = 0;
       Message received;
 
-      if (receiveMessage(SysRequestCharacteristic, received))
+      Serial.println("Receive Message");
+      int res = 0;
+      do 
       {
+        res = receiveMessage(SysRequestCharacteristic, received);
         ax = received.x;
         ay = received.y;
-      }
+      } while (!res);
   
       if (attackPhase.parseAttackCommand(incoming, moveNumber, ax, ay)) {
         if (!game.spielBeendet) {

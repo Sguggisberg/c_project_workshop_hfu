@@ -14,7 +14,7 @@ void setup_central() {
   // start scanning for Button Device BLE peripherals
   BLE.scanForUuid(GAME_SERVICE_UUID);
 
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 10; ++i) {
 
     BLEDevice peripheral = BLE.available();
     if (peripheral) {
