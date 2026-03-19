@@ -14,7 +14,7 @@ void setup_central() {
     ;
   // initialize the BLE hardware
   BLE.begin();
-  Serial.println("BLE Central - LED control");
+  Serial.println("BLE Central - ship sink control");
   // start scanning for Button Device BLE peripherals
   BLE.scanForUuid(GAME_SERVICE);
 }

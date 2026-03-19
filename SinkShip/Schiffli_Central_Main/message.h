@@ -11,6 +11,7 @@
 const char GAME_SERVICE[]="19b10000-e8f2-537e-4f6c-d104768a1214";
 const char GAME_REQUEST_CHARACTERSITIC_UUID[] = "19b10001-e8f2-537e-4f6c-d104768a1214";
 const char GAME_RESPONSE_CHARACTERSITIC_UUID[] = "19b10002-e8f2-537e-4f6c-d104768a1214";
+const char GAME_DEVICE_NAME[] = "Game Device";
 
 const size_t MAC_ADDR_LENGTH = 18;
 typedef char MacAddress[MAC_ADDR_LENGTH];
@@ -38,5 +39,6 @@ String getMacAddress();
 
 int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, uint8_t y);
 int receiveMessage(BLECharacteristic& characteristic, Message& message);
+bool isPeripheral();
 
 #endif

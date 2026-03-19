@@ -28,7 +28,7 @@ void setup() {
   controller.begin();
     // initialize the BLE hardware
   BLE.begin();
-  isCentral = BLE.central();
+  isCentral = !isPeripheral();
   if (isCentral) {
     setup_central();
   } else {

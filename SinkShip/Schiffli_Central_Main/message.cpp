@@ -14,5 +14,25 @@ int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, 
 
 int receiveMessage(BLECharacteristic& characteristic, Message& message)
 {
-  return characteristic.readValue(&message, sizeof(Message));
+  bool written = characteristic.written();
+  if (written)
+    return characteristic.readValue(&message, sizeof(Message));
+  return 0;
+}
+
+bool isPeripheral()
+{
+  BLE.scanForName(GAME_DEVICE_NAME);
+
+  BLEDevice peripheral = BLE.available();
+
+  if (peripheral) {
+
+    Serial.print("Found peripheral: "); 
+    Serial.println(peripheral.address());
+
+    return true;
+  }
+
+  return false;
 }
