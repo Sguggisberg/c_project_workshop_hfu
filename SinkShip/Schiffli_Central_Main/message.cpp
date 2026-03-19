@@ -2,25 +2,38 @@
 #include "message.h"
 
 int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, uint8_t y) {
+  Serial.print("BLE sendMessage: type: ");
+  Serial.print(type);
+  Serial.print(", x: ");
+  Serial.print(x);
+  Serial.print(", y: ");
+  Serial.println(y);
+
   Message message;
-  message.type = BOMB_ATTACK;
+  message.type = type;
   message.recevierId[0] = '\0';
   message.senderId[0] = '\0';
-  message.x = 7;
-  message.y = 8;
+  message.x = x;
+  message.y = y;
 
   return characteristic.writeValue(&message, sizeof(Message), false);
 }
 
 int receiveMessage(BLECharacteristic& characteristic, Message& message)
 {
-  bool written = characteristic.written();
-  if (written)
-    return characteristic.readValue(&message, sizeof(Message));
+  Serial.println("BLE receiveMessage:");
+   bool written = characteristic.written();
+  if (written) {
+    Serial.println("BLE written");
+    int res = characteristic.readValue(&message, sizeof(Message));
+    if (res > 0) {
+      Serial.println(message.type);
+    }
+  }
   return 0;
 }
 
-bool isPeripheral()
+bool foundPeripheral()
 {
   BLE.scanForName(GAME_DEVICE_NAME);
 

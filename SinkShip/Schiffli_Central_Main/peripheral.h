@@ -10,7 +10,4 @@
 void setupPeripheral();
 void loopPeripheral();
 
-extern BLECharacteristic RequestCharacteristic;
-extern BLECharacteristic ResponseCharacteristic;
-
 #endif

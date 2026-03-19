@@ -1,5 +1,4 @@
 #include "GameController.h"
-#include "message.h"
 #include <cstdio>
 #include <cstring>
 
@@ -215,13 +214,6 @@ void GameController::bearbeiteAttackTouch() {
     attackModeArmed = false;
     playMode = MODE_WAIT_RESPONSE;
 
-  if (sendMessage(SysRequestCharacteristic, ATTACK, gx, gy)) {
-      Serial.print("Send attack");
-      Serial.print(gx);
-      Serial.print(", ");
-      Serial.println(gy);
-    }
-
     game.setStatusMessage(msg);
     display.redrawAttackButton(false);
     display.redrawBottomBar(game);
@@ -361,8 +353,7 @@ void GameController::verarbeiteGegnerAngriff(uint16_t moveNumber, uint8_t ax, ui
 void GameController::bearbeiteSerielleAntwort() {
   static char incoming[128];
   static uint8_t idx = 0;
-  Message received;
-  
+
   while (Serial.available()) {
     char c = (char)Serial.read();
 
@@ -388,14 +379,7 @@ void GameController::bearbeiteSerielleAntwort() {
       uint16_t moveNumber = 0;
       uint8_t ax = 0;
       uint8_t ay = 0;
-      Message received;
 
-      if (receiveMessage(SysRequestCharacteristic, received))
-      {
-        ax = received.x;
-        ay = received.y;
-      }
-  
       if (attackPhase.parseAttackCommand(incoming, moveNumber, ax, ay)) {
         if (!game.spielBeendet) {
           game.spielStatus = SPIEL_LAEUFT;
@@ -405,18 +389,6 @@ void GameController::bearbeiteSerielleAntwort() {
       }
 
       uint8_t response = 0;
-      switch (received.type)
-      {
-        case HIT:
-          response = RESP_HIT;
-          break;
-        case WATER:
-          response = RESP_WATER;
-          break;
-        case SUNK:
-          response = RESP_SUNK;
-          break;
-      }
       bool repeatTurn = false;
       SunkInfo sunkInfo;
 

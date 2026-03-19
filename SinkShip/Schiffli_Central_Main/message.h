@@ -19,11 +19,12 @@ typedef char MacAddress[MAC_ADDR_LENGTH];
 enum MessageType {
   START,
   PLAY,
-  BOMB_ATTACK,
-  SPY_ATTACK,
+  ATTACK,
+  SPY,
   HIT,
-  MISSED,
+  WATER,
   SUNK,
+  ALREADY_USED,
   STOP,
 };
 
@@ -39,6 +40,10 @@ String getMacAddress();
 
 int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, uint8_t y);
 int receiveMessage(BLECharacteristic& characteristic, Message& message);
-bool isPeripheral();
+bool foundPeripheral();
+void initCharacteristic();
+
+extern BLECharacteristic SysRequestCharacteristic;
+extern BLECharacteristic SysResponseCharacteristic;
 
 #endif

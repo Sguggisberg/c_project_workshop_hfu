@@ -9,6 +9,9 @@ BLECharacteristic ResponseCharacteristic(GAME_RESPONSE_CHARACTERSITIC_UUID, BLER
 
 
 void setupPeripheral() {
+  SysRequestCharacteristic = RequestCharacteristic;
+  SysResponseCharacteristic = ResponseCharacteristic;
+
   // set advertised local name and service UUID:
   BLE.setLocalName("Game Device");
   BLE.setAdvertisedService(GameService);
@@ -38,7 +41,7 @@ void loopPeripheral() {
     while (central.connected()) {
 
       Serial.println("Write message");
-      if (sendMessage(RequestCharacteristic, BOMB_ATTACK, 3, 7)) {
+      if (sendMessage(RequestCharacteristic, ATTACK, 3, 7)) {
         Serial.println("Send successful");
       }
 
