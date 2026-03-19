@@ -9,19 +9,23 @@ void log(BLEDevice peripheral);
 void send_response(BLEDevice peripheral);
 
 void setup_central() {
+   BLEDevice peripheral;
+  do {
+    Serial.println("BLE Central - Game control");
+    // start scanning for Button Device BLE peripherals
+    BLE.scanForUuid(GAME_SERVICE);
 
-  Serial.println("BLE Central - Game control");
-  // start scanning for Button Device BLE peripherals
-  BLE.scanForUuid(GAME_SERVICE);
-
-  BLEDevice peripheral = BLE.available();
-  if (peripheral) {
-    SysRequestCharacteristic = peripheral.characteristic(GAME_REQUEST_CHARACTERSITIC_UUID);
-    SysResponseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
-  }
-  else {
-    Serial.println("Peripheral not found");
-  }
+    peripheral = BLE.available();
+    if (peripheral) {
+      Serial.println("Peripheral found");
+      SysRequestCharacteristic = peripheral.characteristic(GAME_REQUEST_CHARACTERSITIC_UUID);
+      SysResponseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
+    } else {
+      Serial.println("Peripheral not found");
+    }
+    delay(500);
+  } while (!peripheral);
+     Serial.println("Peripheral found");
 }
 
 String getMacAddress() {

@@ -24,17 +24,21 @@ BLECharacteristic SysRequestCharacteristic;
 BLECharacteristic SysResponseCharacteristic;
 
 bool logging = false;
-bool isCentral = false;
+bool isCentral = true;
 
 void setup() {
-  SPI.begin();   //  MUSS drin bleiben!
+  SPI.begin();  //  MUSS drin bleiben!
   controller.begin();
-    // initialize the BLE hardware
+  // initialize the BLE hardware
   BLE.begin();
-  isCentral = !isPeripheral();
+
+  isCentral = foundPeripheral();
   if (isCentral) {
     Serial.println("BLE is central");
+  } else {
+    Serial.println("BLE is peripherie");
   }
+
   if (isCentral) {
     setup_central();
   } else {
