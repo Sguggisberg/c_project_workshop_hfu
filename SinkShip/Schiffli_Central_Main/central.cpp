@@ -14,8 +14,6 @@ void setup_central() {
   // start scanning for Button Device BLE peripherals
   BLE.scanForUuid(GAME_SERVICE_UUID);
 
-  digitalWrite(BUILTIN_LED, HIGH);
-  
   for (int i = 0; i < 100; ++i) {
 
     BLEDevice peripheral = BLE.available();
@@ -24,8 +22,7 @@ void setup_central() {
       SysResponseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
       Serial.println("Peripheral found");
       return;
-    }
-    else {
+    } else {
       Serial.println("Peripheral not found, next try");
     }
     delay(200);
