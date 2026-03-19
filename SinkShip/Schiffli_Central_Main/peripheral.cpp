@@ -1,6 +1,6 @@
 #include "peripheral.h"
 
-BLEService GameService(GAME_SERVICE);  // BLE LED Service
+BLEService GameService(GAME_SERVICE_UUID);  // BLE LED Service
 // BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
 BLECharacteristic RequestCharacteristic(GAME_REQUEST_CHARACTERSITIC_UUID, BLERead | BLENotify | BLEWrite,
                                         sizeof(Message), true);
@@ -13,7 +13,7 @@ void setupPeripheral() {
   SysResponseCharacteristic = ResponseCharacteristic;
 
   // set advertised local name and service UUID:
-  BLE.setLocalName("Game Device");
+  BLE.setLocalName(GAME_DEVICE_NAME);
   BLE.setAdvertisedService(GameService);
   // add the characteristic to the service
   GameService.addCharacteristic(RequestCharacteristic);

@@ -19,10 +19,9 @@ int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, 
   return characteristic.writeValue(&message, sizeof(Message), false);
 }
 
-int receiveMessage(BLECharacteristic& characteristic, Message& message)
-{
+int receiveMessage(BLECharacteristic& characteristic, Message& message) {
   Serial.println("BLE receiveMessage:");
-   bool written = characteristic.written();
+  bool written = characteristic.written();
   if (written) {
     Serial.println("BLE written");
     int res = characteristic.readValue(&message, sizeof(Message));
@@ -33,19 +32,24 @@ int receiveMessage(BLECharacteristic& characteristic, Message& message)
   return 0;
 }
 
-bool foundPeripheral()
-{
-  BLE.scanForName(GAME_DEVICE_NAME);
+bool foundPeripheral() {
+  //BLE.scanForName(GAME_DEVICE_NAME);
+  BLE.scanForUuid(GAME_SERVICE_UUID);
 
-  BLEDevice peripheral = BLE.available();
+  for (int i = 0; i < 100; i++) {
 
-  if (peripheral) {
+    BLEDevice peripheral = BLE.available();
 
-    Serial.print("Found peripheral: "); 
-    Serial.println(peripheral.address());
+    if (peripheral) {
 
-    return true;
+      Serial.print("Found peripheral: ");
+      Serial.println(peripheral.address());
+
+      return true;
+    }
+    Serial.println("Peripheral not found");
+    
+    delay(200);
   }
-
   return false;
 }

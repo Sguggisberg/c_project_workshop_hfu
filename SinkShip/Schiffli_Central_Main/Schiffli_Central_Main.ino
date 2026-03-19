@@ -31,15 +31,24 @@ void setup() {
   controller.begin();
     // initialize the BLE hardware
   BLE.begin();
-  isCentral = !isPeripheral();
+  isCentral = foundPeripheral();
   if (isCentral) {
     Serial.println("BLE is central");
   }
+  else {
+    Serial.println("BLE is peripheral");
+  }
+
   if (isCentral) {
     setup_central();
+    
   } else {
     setupPeripheral();
   }
+
+  // Mac address 1
+  // Mac address 2
+
 }
 
 void loop() {

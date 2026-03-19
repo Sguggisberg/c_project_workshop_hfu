@@ -363,9 +363,8 @@ void GameController::bearbeiteSerielleAntwort() {
   static uint8_t idx = 0;
   Message received;
   
-  while (Serial.available()) {
+   while (Serial.available()) {
     char c = (char)Serial.read();
-
     if (c == '\r') continue;
 
     if (c == '\n') {
