@@ -4,38 +4,39 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 #include "GameState.h"
+#include "BleLink.h"
 
 class DisplayManager {
 public:
-  DisplayManager(Adafruit_ILI9341& display, uint8_t touchCsPin);
+  DisplayManager(Adafruit_ILI9341& display);
 
   void begin();
-  void drawInitialScreen(const GameState& game);
+  void drawFatal(const char* text);
+
+  void drawLobby(const GameState& game, const BleLink& ble);
+  void drawInviteDialog(const char* title, const char* line1, const char* line2);
+  void drawGame(const GameState& game);
 
   void redrawBottomBar(const GameState& game);
   void redrawStatusPanel(const GameState& game);
-  void redrawPlacementButtons(const GameState& game);
   void redrawAttackButton(bool active);
+  void redrawPlacementButtons(const GameState& game);
 
   void drawOwnCell(uint8_t gx, uint8_t gy, uint8_t state);
-  void drawEnemyWater(uint8_t gx, uint8_t gy);
-  void drawEnemyHit(uint8_t gx, uint8_t gy);
-  void drawEnemySunkCell(uint8_t gx, uint8_t gy);
+  void drawEnemyCell(uint8_t gx, uint8_t gy, uint8_t state);
 
 private:
   Adafruit_ILI9341& tft;
-  uint8_t touchCs;
 
-  void selectDisplay();
-  void drawBaseScreen(const GameState& game);
-  void drawGridFrame(int startX, int startY, const char* titel, uint8_t gridSize);
-  void drawStatusButton(bool active);
-  void drawQuitButton();
-  void drawStatusPanel(const GameState& game);
-  void drawBottomText(const GameState& game);
   void drawButton(int x, int y, int w, int h, const char* text,
                   uint16_t frame, uint16_t textColor, uint16_t fill);
-  uint16_t farbeFuerMeinFeld(uint8_t state) const;
+  void drawGridFrame(int x, int y, const char* title);
+  void drawStatusButton(bool active);
+  void drawRestartButton();
+  void drawQuitButton();
+  void drawBottomText(const GameState& game);
+  void drawStatusPanelInternal(const GameState& game);
+  uint16_t ownColor(uint8_t state) const;
 };
 
 #endif

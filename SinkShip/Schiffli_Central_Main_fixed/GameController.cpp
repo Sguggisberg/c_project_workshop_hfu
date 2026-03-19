@@ -248,6 +248,7 @@ void GameController::verarbeiteGegnerAngriff(uint16_t moveNumber, uint8_t ax, ui
              moveNumber, RESP_WATER, 0);
 
     Serial.println(responseBuffer);
+    sendMessage(SysResponseCharacteristic, WATER, ax, ay);
 
     game.setPlayerTurn();
     playMode = MODE_ATTACK;
@@ -288,6 +289,7 @@ void GameController::verarbeiteGegnerAngriff(uint16_t moveNumber, uint8_t ax, ui
       }
 
       Serial.println(responseBuffer);
+      sendMessage(SysResponseCharacteristic, SUNK, ax, ay);
 
       game.setEnemyTurn();
       playMode = MODE_WAIT_RESPONSE;
@@ -304,6 +306,7 @@ void GameController::verarbeiteGegnerAngriff(uint16_t moveNumber, uint8_t ax, ui
              moveNumber, RESP_HIT, 1);
 
     Serial.println(responseBuffer);
+    sendMessage(SysResponseCharacteristic, HIT, ax, ay);
 
     game.setEnemyTurn();
     playMode = MODE_WAIT_RESPONSE;
@@ -321,6 +324,7 @@ void GameController::verarbeiteGegnerAngriff(uint16_t moveNumber, uint8_t ax, ui
              moveNumber, RESP_HIT, 1);
 
     Serial.println(responseBuffer);
+    sendMessage(SysResponseCharacteristic, HIT, ax, ay);
 
     game.setEnemyTurn();
     playMode = MODE_WAIT_RESPONSE;
@@ -348,12 +352,69 @@ void GameController::verarbeiteGegnerAngriff(uint16_t moveNumber, uint8_t ax, ui
     }
 
     Serial.println(responseBuffer);
+    sendMessage(SysResponseCharacteristic, SUNK, ax, ay);
 
     game.setEnemyTurn();
     playMode = MODE_WAIT_RESPONSE;
     attackModeArmed = false;
     game.setStatusMessage("Bereits versenkt");
     finalizeIfGameEnded(nullptr);
+    return;
+  }
+}
+
+void GameController::bearbeiteAntwortNachricht(MessageType type) {
+  if (lastAttackX >= GRID_SIZE || lastAttackY >= GRID_SIZE) {
+    game.setStatusMessage("Antwort ohne Angriff");
+    updatePanelsIfVisible();
+    return;
+  }
+
+  if (type == WATER) {
+    game.setEnemyCellState(lastAttackX, lastAttackY, ENEMY_WATER);
+    display.drawEnemyWater(lastAttackX, lastAttackY);
+    game.setEnemyTurn();
+    playMode = MODE_WAIT_RESPONSE;
+    game.setStatusMessage("Wasser");
+  } else if (type == HIT) {
+    game.setEnemyCellState(lastAttackX, lastAttackY, ENEMY_HIT);
+    display.drawEnemyHit(lastAttackX, lastAttackY);
+    game.setPlayerTurn();
+    playMode = MODE_ATTACK;
+    game.setStatusMessage("Treffer");
+  } else if (type == SUNK) {
+    game.setEnemyCellState(lastAttackX, lastAttackY, ENEMY_SUNK);
+    display.drawEnemySunkCell(lastAttackX, lastAttackY);
+    game.markEnemyShipSunk(1);
+    game.setPlayerTurn();
+    playMode = MODE_ATTACK;
+    game.setStatusMessage("Versenkt");
+  } else {
+    return;
+  }
+
+  attackModeArmed = false;
+  display.redrawAttackButton(false);
+  finalizeIfGameEnded(nullptr);
+}
+
+void GameController::bearbeiteBleNachrichten() {
+  if (!SysPeripheral || !SysPeripheral.connected()) {
+    return;
+  }
+
+  Message received{};
+
+  if (receiveMessage(SysRequestCharacteristic, received)) {
+    if (received.type == ATTACK && !game.spielBeendet) {
+      game.spielStatus = SPIEL_LAEUFT;
+      verarbeiteGegnerAngriff(0, received.x, received.y);
+      return;
+    }
+  }
+
+  if (receiveMessage(SysResponseCharacteristic, received)) {
+    bearbeiteAntwortNachricht(received.type);
     return;
   }
 }
@@ -388,18 +449,6 @@ void GameController::bearbeiteSerielleAntwort() {
       uint8_t ax = 0;
       uint8_t ay = 0;
 
-      Serial.println("Receive Message");
-      Serial.print("Connected: ");
-      if (SysPeripheral) {
-        Serial.println(SysPeripheral.connected());
-      }
-      int res = receiveMessage(SysRequestCharacteristic, received);
-      while (!res) {
-        ax = received.x;
-        ay = received.y;
-        res = receiveMessage(SysRequestCharacteristic, received);
-      }
-
       if (attackPhase.parseAttackCommand(incoming, moveNumber, ax, ay)) {
         if (!game.spielBeendet) {
           game.spielStatus = SPIEL_LAEUFT;
@@ -418,6 +467,8 @@ void GameController::bearbeiteSerielleAntwort() {
           break;
         case SUNK:
           response = RESP_SUNK;
+          break;
+        default:
           break;
       }
       bool repeatTurn = false;
@@ -492,6 +543,7 @@ void GameController::bearbeiteSerielleAntwort() {
 }
 
 void GameController::update() {
+  bearbeiteBleNachrichten();
   bearbeiteSerielleAntwort();
 
   if (game.spielStatus == SCHIFFE_PLATZIEREN) {

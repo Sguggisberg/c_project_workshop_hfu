@@ -1,54 +1,47 @@
 #include <SPI.h>
+#include <ArduinoBLE.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 #include <XPT2046_Touchscreen.h>
 
 #include "AppConfig.h"
+#include "Protocol.h"
+#include "BleLink.h"
 #include "GameState.h"
 #include "DisplayManager.h"
 #include "TouchManager.h"
 #include "GameController.h"
 
-#include "central.h"
-#include "peripheral.h"
-
 Adafruit_ILI9341 tft(TFT_CS, TFT_DC, TFT_RST);
 XPT2046_Touchscreen ts(TOUCH_CS, TOUCH_IRQ);
 
+BleLink ble;
 GameState game;
-DisplayManager displayManager(tft, TOUCH_CS);
-TouchManager touchManager(ts, TFT_CS, TOUCH_CS);
-GameController controller(game, displayManager, touchManager);
-
-BLECharacteristic SysRequestCharacteristic;
-BLECharacteristic SysResponseCharacteristic;
-
-bool logging = false;
-bool isCentral = true;
+DisplayManager display(tft);
+TouchManager touch(ts, TFT_CS, TOUCH_CS);
+GameController controller(game, display, touch, ble);
 
 void setup() {
-  SPI.begin();  //  MUSS drin bleiben!
+  Serial.begin(115200);
+  delay(200);
+
+  SPI.begin();
+
+  display.begin();
+  touch.begin();
+
+  if (!ble.begin()) {
+    display.drawFatal("BLE konnte nicht gestartet werden");
+    while (true) {
+      delay(1000);
+    }
+  }
+
   controller.begin();
-  // initialize the BLE hardware
-  BLE.begin();
-  isCentral = foundPeripheral();
-  if (isCentral) {
-    Serial.println("BLE is central");
-  } else {
-    Serial.println("BLE is peripherie");
-  }
-  if (isCentral) {
-    setup_central();
-    
-  } else {
-    setupPeripheral();
-  }
 }
 
 void loop() {
-  // Poll of date
-  if (isCentral) {
-    BLE.poll();
-  }
+  BLE.poll();
+  ble.update();
   controller.update();
 }

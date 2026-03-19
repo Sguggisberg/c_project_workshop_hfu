@@ -1,25 +1,18 @@
 #ifndef GAME_CONTROLLER_H
 #define GAME_CONTROLLER_H
 
-#include <Arduino.h>
 #include "GameState.h"
 #include "DisplayManager.h"
 #include "TouchManager.h"
-#include "Phase1.h"
-#include "AttackPhase.h"
-#include "StatusPhase.h"
-
-enum PlayMode {
-  MODE_PLACE_SHIPS,
-  MODE_ATTACK,
-  MODE_WAIT_RESPONSE
-};
+#include "BleLink.h"
+#include "Protocol.h"
 
 class GameController {
 public:
   GameController(GameState& gameState,
                  DisplayManager& displayMgr,
-                 TouchManager& touchMgr);
+                 TouchManager& touchMgr,
+                 BleLink& bleLink);
 
   void begin();
   void update();
@@ -28,24 +21,30 @@ private:
   GameState& game;
   DisplayManager& display;
   TouchManager& touch;
+  BleLink& ble;
 
-  AttackPhase attackPhase;
-  StatusPhase statusPhase;
+  bool dirtyFullRedraw;
 
-  PlayMode playMode;
-  bool attackModeArmed;
-  bool lastTouchDown;
-  uint8_t lastAttackX;
-  uint8_t lastAttackY;
+  void handleBlePackets();
+  void handleTouch();
+  void handleLobbyTouch(int sx, int sy);
+  void handleInviteDialogTouch(int sx, int sy);
+  void handleRestartDialogTouch(int sx, int sy);
+  void handleGameTouch(int sx, int sy);
 
-  bool punktInRechteck(int px, int py, int rx, int ry, int rw, int rh) const;
-  void bearbeiteSchiffPlatzierungTouch();
-  void bearbeiteAttackTouch();
-  void bearbeiteSerielleAntwort();
+  void enterGameScreen();
+  void startNewConnectedGame();
 
-  void updatePanelsIfVisible();
-  void finalizeIfGameEnded(const char* text);
-  void verarbeiteGegnerAngriff(uint16_t moveNumber, uint8_t ax, uint8_t ay);
+  void processAttackFromEnemy(uint8_t x, uint8_t y);
+  void processResultFromEnemy(const Packet& p);
+
+  void requestRestart();
+  void acceptRestart();
+  void declineRestart();
+
+  void quitGame();
+
+  void redrawIfNeeded();
 };
 
 #endif

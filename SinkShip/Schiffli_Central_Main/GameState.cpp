@@ -2,217 +2,166 @@
 #include <cstring>
 #include <cstdio>
 
-const uint8_t GameState::schiffLaengen[GameState::SHIP_COUNT] = {5, 4, 3, 3, 2};
+const uint8_t GameState::shipLengths[GameState::SHIP_COUNT] = {5, 4, 3, 3, 2};
 
 GameState::GameState() {
-  init();
+  resetAll();
 }
 
-void GameState::init() {
-  amZug = TurnOwner::PLAYER;
-  spielStatus = SCHIFFE_PLATZIEREN;
-  spielBeendet = false;
-  quitAngefordert = false;
-  statusSichtbar = false;
-  horizontal = true;
-  aktuellesSchiff = 0;
+void GameState::initShipCounters() {
+  ownShips[0] = {2, 1};
+  ownShips[1] = {3, 2};
+  ownShips[2] = {4, 1};
+  ownShips[3] = {5, 1};
 
+  enemyShips[0] = {2, 1};
+  enemyShips[1] = {3, 2};
+  enemyShips[2] = {4, 1};
+  enemyShips[3] = {5, 1};
+}
+
+void GameState::resetBoardOnly() {
   for (uint8_t y = 0; y < GRID_LEN; y++) {
     for (uint8_t x = 0; x < GRID_LEN; x++) {
-      meinFeld[y][x] = 0;
-      gegnerFeld[y][x] = ENEMY_UNKNOWN;
-      meinSchiffId[y][x] = 0;
+      ownGrid[y][x] = 0;
+      enemyGrid[y][x] = ENEMY_UNKNOWN;
+      ownShipId[y][x] = 0;
     }
   }
 
   for (uint8_t i = 0; i < SHIP_COUNT; i++) {
-    eigeneSchiffTreffer[i] = 0;
+    ownShipHits[i] = 0;
   }
 
-  initShipStatus();
+  initShipCounters();
+
+  horizontal = true;
+  currentShip = 0;
+  myReady = false;
+  opponentReady = false;
+  attackArmed = false;
+  gameOver = false;
+  enemySelected = false;
+  selectedEnemyX = 0;
+  selectedEnemyY = 0;
+
+  phase = GamePhase::PLACE_SHIPS;
+  turn = TurnOwner::PLAYER;
   updatePlacementMessage();
 }
 
-void GameState::initShipStatus() {
-  eigeneSchiffe[0] = {2, 1};
-  eigeneSchiffe[1] = {3, 2};
-  eigeneSchiffe[2] = {4, 1};
-  eigeneSchiffe[3] = {5, 1};
+void GameState::resetAll() {
+  screen = UiScreen::LOBBY;
+  phase = GamePhase::PLACE_SHIPS;
+  turn = TurnOwner::PLAYER;
 
-  gegnerSchiffe[0] = {2, 1};
-  gegnerSchiffe[1] = {3, 2};
-  gegnerSchiffe[2] = {4, 1};
-  gegnerSchiffe[3] = {5, 1};
+  statusVisible = false;
+  quitRequested = false;
+  restartRequested = false;
+  gameOpened = false;
+  invitePending = false;
+  restartPending = false;
+  connectionAccepted = false;
+  initiatorBegins = false;
+
+  resetBoardOnly();
 }
 
 bool GameState::isPlayerTurn() const {
-  return amZug == TurnOwner::PLAYER;
+  return turn == TurnOwner::PLAYER;
 }
 
 void GameState::setPlayerTurn() {
-  amZug = TurnOwner::PLAYER;
+  turn = TurnOwner::PLAYER;
 }
 
 void GameState::setEnemyTurn() {
-  amZug = TurnOwner::ENEMY;
+  turn = TurnOwner::ENEMY;
 }
 
-void GameState::showStatus() {
-  statusSichtbar = true;
+bool GameState::allShipsPlaced() const {
+  return currentShip >= SHIP_COUNT;
 }
 
-void GameState::hideStatus() {
-  statusSichtbar = false;
-}
-
-void GameState::toggleStatus() {
-  statusSichtbar = !statusSichtbar;
-}
-
-void GameState::requestQuit() {
-  quitAngefordert = true;
-  spielBeendet = true;
-  spielStatus = SPIEL_BEENDET;
-  setStatusMessage("Spiel beendet");
-}
-
-const char* GameState::getTurnText() const {
-  return isPlayerTurn() ? "Du bist dran" : "Gegner ist dran";
-}
-
-const char* GameState::getSpielBeendetText() const {
-  return spielBeendet ? "Ja" : "Nein";
-}
-
-const char* GameState::getDirectionText() const {
-  return horizontal ? "Horizontal" : "Vertikal";
-}
-
-void GameState::setStatusMessage(const char* text) {
-  strncpy(statusMeldung, text, sizeof(statusMeldung) - 1);
-  statusMeldung[sizeof(statusMeldung) - 1] = '\0';
-}
-
-void GameState::updatePlacementMessage() {
-  if (alleSchiffeGesetzt()) {
-    setStatusMessage("Alle Schiffe gesetzt -> OK");
-    return;
-  }
-
-  char msg[64];
-  snprintf(msg, sizeof(msg), "Setze Schiff %u (%u), %s",
-           aktuellesSchiff + 1,
-           schiffLaengen[aktuellesSchiff],
-           getDirectionText());
-  setStatusMessage(msg);
-}
-
-void GameState::clearEnemyView() {
-  for (uint8_t y = 0; y < GRID_LEN; y++) {
-    for (uint8_t x = 0; x < GRID_LEN; x++) {
-      gegnerFeld[y][x] = ENEMY_UNKNOWN;
-    }
-  }
-}
-
-bool GameState::alleSchiffeGesetzt() const {
-  return aktuellesSchiff >= SHIP_COUNT;
-}
-
-bool GameState::kannSchiffPlatzieren(uint8_t startX, uint8_t startY, uint8_t laenge, bool istHorizontal) const {
-  if (istHorizontal) {
-    if (startX + laenge > GRID_LEN) return false;
-    for (uint8_t i = 0; i < laenge; i++) {
-      if (meinFeld[startY][startX + i] != 0) return false;
+bool GameState::canPlaceShip(uint8_t x, uint8_t y, uint8_t len, bool hor) const {
+  if (hor) {
+    if (x + len > GRID_LEN) return false;
+    for (uint8_t i = 0; i < len; i++) {
+      if (ownGrid[y][x + i] != 0) return false;
     }
   } else {
-    if (startY + laenge > GRID_LEN) return false;
-    for (uint8_t i = 0; i < laenge; i++) {
-      if (meinFeld[startY + i][startX] != 0) return false;
+    if (y + len > GRID_LEN) return false;
+    for (uint8_t i = 0; i < len; i++) {
+      if (ownGrid[y + i][x] != 0) return false;
     }
   }
   return true;
 }
 
-void GameState::setzeSchiff(uint8_t startX, uint8_t startY, uint8_t laenge, bool istHorizontal) {
-  uint8_t shipId = aktuellesSchiff + 1;
+void GameState::placeShip(uint8_t x, uint8_t y, uint8_t len, bool hor) {
+  uint8_t id = currentShip + 1;
 
-  if (istHorizontal) {
-    for (uint8_t i = 0; i < laenge; i++) {
-      meinFeld[startY][startX + i] = 1;
-      meinSchiffId[startY][startX + i] = shipId;
+  if (hor) {
+    for (uint8_t i = 0; i < len; i++) {
+      ownGrid[y][x + i] = 1;
+      ownShipId[y][x + i] = id;
     }
   } else {
-    for (uint8_t i = 0; i < laenge; i++) {
-      meinFeld[startY + i][startX] = 1;
-      meinSchiffId[startY + i][startX] = shipId;
+    for (uint8_t i = 0; i < len; i++) {
+      ownGrid[y + i][x] = 1;
+      ownShipId[y + i][x] = id;
     }
   }
 }
 
-void GameState::setEnemyCellState(uint8_t x, uint8_t y, uint8_t state) {
+void GameState::clearEnemyView() {
+  for (uint8_t y = 0; y < GRID_LEN; y++) {
+    for (uint8_t x = 0; x < GRID_LEN; x++) {
+      enemyGrid[y][x] = ENEMY_UNKNOWN;
+    }
+  }
+}
+
+void GameState::setEnemyCell(uint8_t x, uint8_t y, uint8_t state) {
   if (x >= GRID_LEN || y >= GRID_LEN) return;
-  gegnerFeld[y][x] = state;
-}
-
-void GameState::markEnemyShipSunk(uint8_t shipLength) {
-  for (uint8_t i = 0; i < SHIP_TYPE_COUNT; i++) {
-    if (gegnerSchiffe[i].groesse == shipLength) {
-      if (gegnerSchiffe[i].anzahlLebend > 0) {
-        gegnerSchiffe[i].anzahlLebend--;
-      }
-      return;
-    }
-  }
-}
-
-void GameState::markOwnShipSunk(uint8_t shipLength) {
-  for (uint8_t i = 0; i < SHIP_TYPE_COUNT; i++) {
-    if (eigeneSchiffe[i].groesse == shipLength) {
-      if (eigeneSchiffe[i].anzahlLebend > 0) {
-        eigeneSchiffe[i].anzahlLebend--;
-      }
-      return;
-    }
-  }
+  enemyGrid[y][x] = state;
 }
 
 uint8_t GameState::getOwnShipIdAt(uint8_t x, uint8_t y) const {
   if (x >= GRID_LEN || y >= GRID_LEN) return 0;
-  return meinSchiffId[y][x];
+  return ownShipId[y][x];
 }
 
-uint8_t GameState::getOwnShipLengthById(uint8_t shipId) const {
-  if (shipId == 0 || shipId > SHIP_COUNT) return 0;
-  return schiffLaengen[shipId - 1];
+uint8_t GameState::getOwnShipLengthById(uint8_t id) const {
+  if (id == 0 || id > SHIP_COUNT) return 0;
+  return shipLengths[id - 1];
 }
 
-bool GameState::isOwnShipSunkById(uint8_t shipId) const {
-  if (shipId == 0 || shipId > SHIP_COUNT) return false;
-  return eigeneSchiffTreffer[shipId - 1] >= schiffLaengen[shipId - 1];
-}
-
-void GameState::registerOwnShipHitById(uint8_t shipId) {
+void GameState::registerOwnHit(uint8_t shipId) {
   if (shipId == 0 || shipId > SHIP_COUNT) return;
-
-  uint8_t index = shipId - 1;
-  if (eigeneSchiffTreffer[index] < schiffLaengen[index]) {
-    eigeneSchiffTreffer[index]++;
+  uint8_t idx = shipId - 1;
+  if (ownShipHits[idx] < shipLengths[idx]) {
+    ownShipHits[idx]++;
   }
 }
 
-void GameState::collectOwnShipCells(uint8_t shipId, SunkInfo& sunkInfo) const {
-  sunkInfo.count = 0;
+bool GameState::isOwnShipSunk(uint8_t shipId) const {
+  if (shipId == 0 || shipId > SHIP_COUNT) return false;
+  uint8_t idx = shipId - 1;
+  return ownShipHits[idx] >= shipLengths[idx];
+}
+
+void GameState::collectOwnShipCells(uint8_t shipId, SunkCells& cells) const {
+  cells.count = 0;
+
   if (shipId == 0 || shipId > SHIP_COUNT) return;
 
   for (uint8_t y = 0; y < GRID_LEN; y++) {
     for (uint8_t x = 0; x < GRID_LEN; x++) {
-      if (meinSchiffId[y][x] == shipId) {
-        if (sunkInfo.count < MAX_SUNK_CELLS) {
-          sunkInfo.x[sunkInfo.count] = x;
-          sunkInfo.y[sunkInfo.count] = y;
-          sunkInfo.count++;
-        }
+      if (ownShipId[y][x] == shipId && cells.count < 5) {
+        cells.x[cells.count] = x;
+        cells.y[cells.count] = y;
+        cells.count++;
       }
     }
   }
@@ -220,14 +169,63 @@ void GameState::collectOwnShipCells(uint8_t shipId, SunkInfo& sunkInfo) const {
 
 bool GameState::allEnemyShipsSunk() const {
   for (uint8_t i = 0; i < SHIP_TYPE_COUNT; i++) {
-    if (gegnerSchiffe[i].anzahlLebend > 0) return false;
+    if (enemyShips[i].anzahlLebend > 0) return false;
   }
   return true;
 }
 
 bool GameState::allOwnShipsSunk() const {
   for (uint8_t i = 0; i < SHIP_TYPE_COUNT; i++) {
-    if (eigeneSchiffe[i].anzahlLebend > 0) return false;
+    if (ownShips[i].anzahlLebend > 0) return false;
   }
   return true;
+}
+
+void GameState::markEnemyShipSunk(uint8_t len) {
+  for (uint8_t i = 0; i < SHIP_TYPE_COUNT; i++) {
+    if (enemyShips[i].groesse == len && enemyShips[i].anzahlLebend > 0) {
+      enemyShips[i].anzahlLebend--;
+      return;
+    }
+  }
+}
+
+void GameState::markOwnShipSunk(uint8_t len) {
+  for (uint8_t i = 0; i < SHIP_TYPE_COUNT; i++) {
+    if (ownShips[i].groesse == len && ownShips[i].anzahlLebend > 0) {
+      ownShips[i].anzahlLebend--;
+      return;
+    }
+  }
+}
+
+const char* GameState::turnText() const {
+  return isPlayerTurn() ? "Du bist dran" : "Gegner ist dran";
+}
+
+const char* GameState::directionText() const {
+  return horizontal ? "Horizontal" : "Vertikal";
+}
+
+const char* GameState::finishedText() const {
+  return gameOver ? "Ja" : "Nein";
+}
+
+void GameState::setStatusMessage(const char* text) {
+  strncpy(statusMessage, text, sizeof(statusMessage) - 1);
+  statusMessage[sizeof(statusMessage) - 1] = '\0';
+}
+
+void GameState::updatePlacementMessage() {
+  if (allShipsPlaced()) {
+    setStatusMessage("Alle Schiffe gesetzt -> OK");
+    return;
+  }
+
+  char buf[64];
+  snprintf(buf, sizeof(buf), "Setze Schiff %u (%u), %s",
+           currentShip + 1,
+           shipLengths[currentShip],
+           directionText());
+  setStatusMessage(buf);
 }

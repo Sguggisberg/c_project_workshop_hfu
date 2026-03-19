@@ -3,21 +3,28 @@
 
 #include <Arduino.h>
 #include "AppConfig.h"
-#include "AttackPhase.h"
+#include "Protocol.h"
 
-enum class TurnOwner {
-  PLAYER,
-  ENEMY
+enum class TurnOwner : uint8_t {
+  PLAYER = 0,
+  ENEMY  = 1
 };
 
-enum SpielStatus {
-  SCHIFFE_PLATZIEREN,
-  WARTE_AUF_GEGNER,
-  SPIEL_LAEUFT,
-  SPIEL_BEENDET
+enum class UiScreen : uint8_t {
+  LOBBY = 0,
+  INVITE_DIALOG,
+  RESTART_DIALOG,
+  GAME
 };
 
-enum EnemyCellState {
+enum class GamePhase : uint8_t {
+  PLACE_SHIPS = 0,
+  WAIT_READY,
+  RUNNING,
+  FINISHED
+};
+
+enum EnemyCellState : uint8_t {
   ENEMY_UNKNOWN = 0,
   ENEMY_WATER   = 1,
   ENEMY_HIT     = 2,
@@ -29,73 +36,90 @@ struct ShipStatusInfo {
   uint8_t anzahlLebend;
 };
 
+struct SunkCells {
+  uint8_t count;
+  uint8_t x[5];
+  uint8_t y[5];
+};
+
 class GameState {
 public:
   static constexpr uint8_t GRID_LEN = GRID_SIZE;
-  static constexpr uint8_t SHIP_TYPE_COUNT = 4;
   static constexpr uint8_t SHIP_COUNT = 5;
-  static const uint8_t schiffLaengen[SHIP_COUNT];
+  static constexpr uint8_t SHIP_TYPE_COUNT = 4;
+  static const uint8_t shipLengths[SHIP_COUNT];
 
   GameState();
 
-  void init();
+  void resetAll();
+  void resetBoardOnly();
 
   bool isPlayerTurn() const;
   void setPlayerTurn();
   void setEnemyTurn();
 
-  void showStatus();
-  void hideStatus();
-  void toggleStatus();
-  void requestQuit();
-
-  const char* getTurnText() const;
-  const char* getSpielBeendetText() const;
-  const char* getDirectionText() const;
-
-  void setStatusMessage(const char* text);
-  void updatePlacementMessage();
+  bool allShipsPlaced() const;
+  bool canPlaceShip(uint8_t x, uint8_t y, uint8_t len, bool horizontal) const;
+  void placeShip(uint8_t x, uint8_t y, uint8_t len, bool horizontal);
 
   void clearEnemyView();
-  bool alleSchiffeGesetzt() const;
-  bool kannSchiffPlatzieren(uint8_t startX, uint8_t startY, uint8_t laenge, bool horizontal) const;
-  void setzeSchiff(uint8_t startX, uint8_t startY, uint8_t laenge, bool horizontal);
-  void setEnemyCellState(uint8_t x, uint8_t y, uint8_t state);
-
-  void markEnemyShipSunk(uint8_t shipLength);
-  void markOwnShipSunk(uint8_t shipLength);
+  void setEnemyCell(uint8_t x, uint8_t y, uint8_t state);
 
   uint8_t getOwnShipIdAt(uint8_t x, uint8_t y) const;
-  uint8_t getOwnShipLengthById(uint8_t shipId) const;
-  bool isOwnShipSunkById(uint8_t shipId) const;
-  void registerOwnShipHitById(uint8_t shipId);
-  void collectOwnShipCells(uint8_t shipId, SunkInfo& sunkInfo) const;
+  uint8_t getOwnShipLengthById(uint8_t id) const;
+  void registerOwnHit(uint8_t shipId);
+  bool isOwnShipSunk(uint8_t shipId) const;
+  void collectOwnShipCells(uint8_t shipId, SunkCells& cells) const;
 
   bool allEnemyShipsSunk() const;
   bool allOwnShipsSunk() const;
 
-  TurnOwner amZug;
-  SpielStatus spielStatus;
+  void markEnemyShipSunk(uint8_t len);
+  void markOwnShipSunk(uint8_t len);
 
-  bool spielBeendet;
-  bool quitAngefordert;
-  bool statusSichtbar;
+  const char* turnText() const;
+  const char* directionText() const;
+  const char* finishedText() const;
+
+  void setStatusMessage(const char* text);
+  void updatePlacementMessage();
+
+  UiScreen screen;
+  GamePhase phase;
+  TurnOwner turn;
+
   bool horizontal;
+  bool statusVisible;
+  bool quitRequested;
+  bool restartRequested;
+  bool gameOpened;
+  bool myReady;
+  bool opponentReady;
+  bool invitePending;
+  bool restartPending;
+  bool attackArmed;
+  bool gameOver;
+  bool connectionAccepted;
+  bool initiatorBegins;
 
-  uint8_t aktuellesSchiff;
-  char statusMeldung[64];
+  uint8_t currentShip;
+  uint8_t selectedEnemyX;
+  uint8_t selectedEnemyY;
+  bool enemySelected;
 
-  uint8_t meinFeld[GRID_LEN][GRID_LEN];
-  uint8_t gegnerFeld[GRID_LEN][GRID_LEN];
+  char statusMessage[64];
 
-  uint8_t meinSchiffId[GRID_LEN][GRID_LEN];
-  uint8_t eigeneSchiffTreffer[SHIP_COUNT];
+  uint8_t ownGrid[GRID_LEN][GRID_LEN];
+  uint8_t enemyGrid[GRID_LEN][GRID_LEN];
 
-  ShipStatusInfo eigeneSchiffe[SHIP_TYPE_COUNT];
-  ShipStatusInfo gegnerSchiffe[SHIP_TYPE_COUNT];
+  uint8_t ownShipId[GRID_LEN][GRID_LEN];
+  uint8_t ownShipHits[SHIP_COUNT];
+
+  ShipStatusInfo ownShips[SHIP_TYPE_COUNT];
+  ShipStatusInfo enemyShips[SHIP_TYPE_COUNT];
 
 private:
-  void initShipStatus();
+  void initShipCounters();
 };
 
 #endif

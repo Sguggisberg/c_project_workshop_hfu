@@ -8,6 +8,7 @@
 #include "Phase1.h"
 #include "AttackPhase.h"
 #include "StatusPhase.h"
+#include "message.h"
 
 enum PlayMode {
   MODE_PLACE_SHIPS,
@@ -42,6 +43,8 @@ private:
   void bearbeiteSchiffPlatzierungTouch();
   void bearbeiteAttackTouch();
   void bearbeiteSerielleAntwort();
+  void bearbeiteBleNachrichten();
+  void bearbeiteAntwortNachricht(MessageType type);
 
   void updatePanelsIfVisible();
   void finalizeIfGameEnded(const char* text);

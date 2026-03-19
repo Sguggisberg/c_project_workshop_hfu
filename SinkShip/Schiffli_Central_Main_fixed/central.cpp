@@ -96,7 +96,7 @@ void loop_central() {
   Serial.print(peripheral.advertisedServiceUuid());
   Serial.println();
 
-  if (peripheral.localName().indexOf("Game Device") < 0) {
+  if (peripheral.localName().indexOf(GAME_DEVICE_NAME) < 0) {
     Serial.println("No 'Game Device' in name");
     return;
   }

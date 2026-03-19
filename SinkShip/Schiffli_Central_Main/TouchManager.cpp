@@ -2,7 +2,7 @@
 #include "AppConfig.h"
 
 TouchManager::TouchManager(XPT2046_Touchscreen& ts, uint8_t tftCsPin, uint8_t touchCsPin)
-  : touch(ts), tftCs(tftCsPin), touchCs(touchCsPin) {
+  : touch(ts), tftCs(tftCsPin), touchCs(touchCsPin), lastTouchDown(false) {
 }
 
 void TouchManager::begin() {
@@ -16,12 +16,10 @@ void TouchManager::begin() {
   touch.begin();
 }
 
-bool TouchManager::touchZuScreen(int& sx, int& sy) {
+bool TouchManager::readTouch(int& sx, int& sy) {
   digitalWrite(tftCs, HIGH);
 
-  if (!touch.touched()) {
-    return false;
-  }
+  if (!touch.touched()) return false;
 
   const uint8_t sampleCount = 3;
   long sumX = 0;
@@ -67,36 +65,41 @@ bool TouchManager::touchZuScreen(int& sx, int& sy) {
 
   sx = mappedX;
   sy = mappedY;
-
   return true;
 }
 
-bool TouchManager::screenZuEigenemFeld(int sx, int sy, uint8_t& feldX, uint8_t& feldY) {
+bool TouchManager::getTouchPressedEdge(int& sx, int& sy) {
+  bool touched = readTouch(sx, sy);
+
+  if (!touched) {
+    lastTouchDown = false;
+    return false;
+  }
+
+  if (lastTouchDown) return false;
+
+  lastTouchDown = true;
+  return true;
+}
+
+bool TouchManager::isInside(int sx, int sy, int x, int y, int w, int h) const {
+  return (sx >= x && sx < (x + w) && sy >= y && sy < (y + h));
+}
+
+bool TouchManager::getOwnGridCell(int sx, int sy, uint8_t& gx, uint8_t& gy) const {
   if (sx < OWN_X || sy < OWN_Y) return false;
   if (sx >= OWN_X + GRID_SIZE * CELL || sy >= OWN_Y + GRID_SIZE * CELL) return false;
 
-  feldX = (sx - OWN_X) / CELL;
-  feldY = (sy - OWN_Y) / CELL;
+  gx = (sx - OWN_X) / CELL;
+  gy = (sy - OWN_Y) / CELL;
   return true;
 }
 
-bool TouchManager::getEnemyGridCell(int sx, int sy, uint8_t& gx, uint8_t& gy) {
+bool TouchManager::getEnemyGridCell(int sx, int sy, uint8_t& gx, uint8_t& gy) const {
   if (sx < ENEMY_X || sy < ENEMY_Y) return false;
   if (sx >= ENEMY_X + GRID_SIZE * CELL || sy >= ENEMY_Y + GRID_SIZE * CELL) return false;
 
   gx = (sx - ENEMY_X) / CELL;
   gy = (sy - ENEMY_Y) / CELL;
   return true;
-}
-
-bool TouchManager::isStatusButton(int sx, int sy) {
-  return isInside(sx, sy, STATUS_BUTTON_X, STATUS_BUTTON_Y, STATUS_BUTTON_W, STATUS_BUTTON_H);
-}
-
-bool TouchManager::isQuitButton(int sx, int sy) {
-  return isInside(sx, sy, QUIT_BUTTON_X, QUIT_BUTTON_Y, QUIT_BUTTON_W, QUIT_BUTTON_H);
-}
-
-bool TouchManager::isInside(int sx, int sy, int x, int y, int w, int h) const {
-  return (sx >= x && sx < (x + w) && sy >= y && sy < (y + h));
 }

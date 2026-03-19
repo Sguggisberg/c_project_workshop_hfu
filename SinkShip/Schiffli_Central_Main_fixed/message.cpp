@@ -33,10 +33,7 @@ int sendMessage(BLECharacteristic& characteristic, MessageType type, uint8_t x, 
 }
 
 int receiveMessage(BLECharacteristic& characteristic, Message& message) {
-  Serial.println("BLE receiveMessage:");
-
   if (!characteristic) {
-    Serial.println("Characteristic not ready");
     return 0;
   }
 
@@ -51,9 +48,6 @@ int receiveMessage(BLECharacteristic& characteristic, Message& message) {
     hasNewValue = true;
     Serial.println("Source: remote notification");
   }
-
-  Serial.print("Has new value: ");
-  Serial.println(hasNewValue);
 
   if (!hasNewValue) {
     return 0;
