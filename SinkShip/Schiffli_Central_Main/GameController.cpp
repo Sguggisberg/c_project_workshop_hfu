@@ -215,7 +215,7 @@ void GameController::bearbeiteAttackTouch() {
     attackModeArmed = false;
     playMode = MODE_WAIT_RESPONSE;
 
-  if (sendMessage(SysRequestCharacteristic, ATTACK, gx, gy)) {
+    if (sendMessage(SysRequestCharacteristic, ATTACK, gx, gy)) {
       Serial.print("Send attack");
       Serial.print(gx);
       Serial.print(", ");
@@ -362,8 +362,8 @@ void GameController::bearbeiteSerielleAntwort() {
   static char incoming[128];
   static uint8_t idx = 0;
   Message received;
-  
-   while (Serial.available()) {
+
+  while (Serial.available()) {
     char c = (char)Serial.read();
     if (c == '\r') continue;
 
@@ -390,14 +390,17 @@ void GameController::bearbeiteSerielleAntwort() {
       Message received;
 
       Serial.println("Receive Message");
-      int res = 0;
-      do 
-      {
-        res = receiveMessage(SysRequestCharacteristic, received);
+      Serial.print("Connected: ");
+      if (SysPeripheral) {
+        Serial.println(SysPeripheral.connected());
+      }
+      int res = receiveMessage(SysRequestCharacteristic, received);
+      while (!res) {
         ax = received.x;
         ay = received.y;
-      } while (!res);
-  
+        res = receiveMessage(SysRequestCharacteristic, received);
+      }
+
       if (attackPhase.parseAttackCommand(incoming, moveNumber, ax, ay)) {
         if (!game.spielBeendet) {
           game.spielStatus = SPIEL_LAEUFT;
@@ -407,8 +410,7 @@ void GameController::bearbeiteSerielleAntwort() {
       }
 
       uint8_t response = 0;
-      switch (received.type)
-      {
+      switch (received.type) {
         case HIT:
           response = RESP_HIT;
           break;

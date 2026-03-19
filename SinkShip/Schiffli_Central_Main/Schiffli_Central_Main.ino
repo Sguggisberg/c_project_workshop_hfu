@@ -43,12 +43,12 @@ void setup() {
   } else {
     setupPeripheral();
   }
-
-  // Mac address 1
-  // Mac address 2
-
 }
 
 void loop() {
+  // Poll of date
+  if (isCentral) {
+    BLE.poll();
+  }
   controller.update();
 }
