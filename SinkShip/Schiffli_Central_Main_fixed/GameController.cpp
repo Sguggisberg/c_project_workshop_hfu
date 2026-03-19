@@ -387,7 +387,6 @@ void GameController::bearbeiteSerielleAntwort() {
       uint16_t moveNumber = 0;
       uint8_t ax = 0;
       uint8_t ay = 0;
-      Message received;
 
       Serial.println("Receive Message");
       Serial.print("Connected: ");

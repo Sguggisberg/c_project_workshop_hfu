@@ -4,12 +4,61 @@
 #include "message.h"
 
 extern bool logging;
-void play_move(BLEDevice peripheral);
-void log(BLEDevice peripheral);
-void send_response(BLEDevice peripheral);
+
+static bool centralConnected = false;
+
+static void clearRemoteHandles() {
+  SysPeripheral = BLEDevice();
+  SysRequestCharacteristic = BLECharacteristic();
+  SysResponseCharacteristic = BLECharacteristic();
+  centralConnected = false;
+}
+
+static bool connectPeripheral(BLEDevice peripheral) {
+  Serial.println("Connecting ...");
+  if (!peripheral.connect()) {
+    Serial.println("Failed to connect!");
+    return false;
+  }
+
+  Serial.println("Discovering attributes ...");
+  if (!peripheral.discoverAttributes()) {
+    Serial.println("Attribute discovery failed!");
+    peripheral.disconnect();
+    return false;
+  }
+
+  BLECharacteristic requestCharacteristic = peripheral.characteristic(GAME_REQUEST_CHARACTERSITIC_UUID);
+  BLECharacteristic responseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
+
+  if (!requestCharacteristic || !responseCharacteristic) {
+    Serial.println("Peripheral does not have required characteristics!");
+    peripheral.disconnect();
+    return false;
+  }
+
+  if (requestCharacteristic.canSubscribe()) {
+    Serial.print("Subscribe request: ");
+    Serial.println(requestCharacteristic.subscribe() ? 1 : 0);
+  }
+
+  if (responseCharacteristic.canSubscribe()) {
+    Serial.print("Subscribe response: ");
+    Serial.println(responseCharacteristic.subscribe() ? 1 : 0);
+  }
+
+  SysPeripheral = peripheral;
+  SysRequestCharacteristic = requestCharacteristic;
+  SysResponseCharacteristic = responseCharacteristic;
+  centralConnected = true;
+
+  Serial.println("Central connected and ready");
+  return true;
+}
 
 void setup_central() {
   Serial.println("BLE Central - Game control");
+  clearRemoteHandles();
   BLE.scanForUuid(GAME_SERVICE_UUID);
 }
 
@@ -23,6 +72,17 @@ String getMacAddress() {
 }
 
 void loop_central() {
+  BLE.poll();
+
+  if (centralConnected) {
+    if (!SysPeripheral || !SysPeripheral.connected()) {
+      Serial.println("Peripheral disconnected");
+      clearRemoteHandles();
+      BLE.scanForUuid(GAME_SERVICE_UUID);
+    }
+    return;
+  }
+
   BLEDevice peripheral = BLE.available();
   if (!peripheral) {
     return;
@@ -42,99 +102,11 @@ void loop_central() {
   }
 
   BLE.stopScan();
-  controlLed(peripheral);
-  BLE.scanForUuid(GAME_SERVICE_UUID);
+  if (!connectPeripheral(peripheral)) {
+    BLE.scanForUuid(GAME_SERVICE_UUID);
+  }
 }
 
 void controlLed(BLEDevice peripheral) {
-  Serial.println("Connecting ...");
-  if (peripheral.connect()) {
-    Serial.println("Connected");
-  } else {
-    Serial.println("Failed to connect!");
-    return;
-  }
-
-  Serial.println("Discovering attributes ...");
-  if (peripheral.discoverAttributes()) {
-    Serial.println("Attributes discovered");
-  } else {
-    Serial.println("Attribute discovery failed!");
-    peripheral.disconnect();
-    return;
-  }
-
-  play_move(peripheral);
-  peripheral.disconnect();
-  Serial.println("Peripheral disconnected");
-}
-
-void play_move(BLEDevice peripheral) {
-  BLECharacteristic gameRequestCharacteristic = peripheral.characteristic(GAME_REQUEST_CHARACTERSITIC_UUID);
-  BLECharacteristic gameResponseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
-
-  if (!gameRequestCharacteristic || !gameResponseCharacteristic) {
-    Serial.println("Peripheral does not have required characteristics!");
-    peripheral.disconnect();
-    return;
-  }
-
-  if (gameRequestCharacteristic.canSubscribe()) {
-    if (gameRequestCharacteristic.subscribe()) {
-      Serial.println("Subscribed to request characteristic");
-    } else {
-      Serial.println("Subscribe failed for request characteristic");
-    }
-  }
-
-  bool responseSent = false;
-
-  while (peripheral.connected()) {
-    BLE.poll();
-
-    if (gameRequestCharacteristic.valueUpdated()) {
-      Message value{};
-      const int bytesRead = gameRequestCharacteristic.readValue(&value, sizeof(value));
-      if (bytesRead == sizeof(value)) {
-        Serial.println("Received request:");
-        Serial.println(value.type);
-        Serial.println(value.x);
-        Serial.println(value.y);
-
-        send_response(peripheral);
-        responseSent = true;
-      } else {
-        Serial.print("Request read failed, bytes: ");
-        Serial.println(bytesRead);
-      }
-    }
-
-    delay(20);
-  }
-}
-
-void send_response(BLEDevice peripheral) {
-  BLECharacteristic gameResponseCharacteristic = peripheral.characteristic(GAME_RESPONSE_CHARACTERSITIC_UUID);
-  if (!gameResponseCharacteristic) {
-    Serial.println("Response characteristic missing");
-    return;
-  }
-
-  Message response{};
-  response.type = HIT;
-  response.senderId[0] = '\0';
-  response.recevierId[0] = '\0';
-  response.x = 9;
-  response.y = 3;
-
-  if (!gameResponseCharacteristic.canWrite()) {
-    Serial.println("Response characteristic is not writable");
-    return;
-  }
-
-  int res = gameResponseCharacteristic.writeValue(&response, sizeof(response));
-  Serial.println("IsConnected: ");
-  Serial.println(peripheral.connected());
-  Serial.println("Response write result: ");
-  Serial.println(res);
+  connectPeripheral(peripheral);
 }

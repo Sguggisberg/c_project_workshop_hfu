@@ -9,7 +9,6 @@ BLECharacteristic ResponseCharacteristic(GAME_RESPONSE_CHARACTERSITIC_UUID, BLER
 void setupPeripheral() {
   SysRequestCharacteristic = RequestCharacteristic;
   SysResponseCharacteristic = ResponseCharacteristic;
-  SysPeripheral = BLEDevice();
 
   Message empty{};
   RequestCharacteristic.writeValue(&empty, sizeof(empty));
@@ -25,20 +24,38 @@ void setupPeripheral() {
 }
 
 void loopPeripheral() {
-  BLE.poll();
-
   BLEDevice central = BLE.central();
-  if (central) {
-    if (!SysPeripheral || !SysPeripheral.connected()) {
-      SysPeripheral = central;
-      Serial.print("Connected to central: ");
-      Serial.println(central.address());
-    }
+  if (!central) {
     return;
   }
 
-  if (SysPeripheral) {
-    Serial.println("Central disconnected");
-    SysPeripheral = BLEDevice();
+  Serial.print("Connected to central: ");
+  Serial.println(central.address());
+
+  bool requestSent = false;
+
+  while (central.connected()) {
+    BLE.poll();
+
+    if (!requestSent) {
+      Serial.println("Write message");
+      if (sendMessage(RequestCharacteristic, ATTACK, 3, 7)) {
+        Serial.println("Send successful");
+        requestSent = true;
+      }
+    }
+
+    Message received{};
+    if (receiveMessage(ResponseCharacteristic, received)) {
+      Serial.print("Received: ");
+      Serial.println(received.type);
+      Serial.println(received.x);
+      Serial.println(received.y);
+      requestSent = false;
+    }
+
+    delay(20);
   }
+
+  Serial.println("Central disconnected");
 }
