@@ -39,7 +39,10 @@ int receiveMessage(BLECharacteristic& characteristic, Message& message) {
 
   bool hasNewValue = false;
 
-  if (characteristic.written()) {
+  if (characteristic.written(
+Search
+Replace
+)) {
     hasNewValue = true;
     Serial.println("Source: local write");
   }

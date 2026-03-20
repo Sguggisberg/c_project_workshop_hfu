@@ -3,9 +3,9 @@
 
 #include <Arduino.h>
 
-const char GAME_SERVICE_UUID[] = "19b10000-e8f2-537e-4f6c-d104768a1214";
-const char GAME_RX_UUID[]      = "19b10001-e8f2-537e-4f6c-d104768a1214";
-const char GAME_TX_UUID[]      = "19b10002-e8f2-537e-4f6c-d104768a1214";
+const char GAME_SERVICE_UUID[] = "19b10000-e8f2-537e-4f6c-d104768a1215";
+const char GAME_RX_UUID[]      = "19b10001-e8f2-537e-4f6c-d104768a1215";
+const char GAME_TX_UUID[]      = "19b10002-e8f2-537e-4f6c-d104768a1215";
 const char GAME_DEVICE_NAME[]  = "Schiffli-RP2040";
 
 enum PacketType : uint8_t {
